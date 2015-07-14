@@ -1,0 +1,23 @@
+name: EZBlocks
+main: me.clip.ezblocks.EZBlocks
+version: 1.3.2
+author: extended_clip
+description: Count players blocks broken
+permissions:
+    ezblocks.check:
+        description: access to check others blocks broken by command
+        default: op
+    ezblocks.set:
+        description: access to check others blocks broken by command
+        default: op
+    ezblocks.pickaxecounter:
+        description: ability to have a pickaxe counter
+        default: op
+    ezblocks.admin:
+        description: access to reload and version commands
+        default: op
+commands:
+   ezblocks:
+     description: EZBlocks main command
+     aliases: [blocks]
+     
