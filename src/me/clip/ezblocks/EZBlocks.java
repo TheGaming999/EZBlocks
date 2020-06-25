@@ -5,6 +5,14 @@ import java.util.Set;
 
 import me.clip.ezblocks.database.Database;
 import me.clip.ezblocks.database.MySQL;
+import me.clip.ezblocks.listeners.AutoSellListener;
+import me.clip.ezblocks.listeners.BreakListenerHigh;
+import me.clip.ezblocks.listeners.BreakListenerHighest;
+import me.clip.ezblocks.listeners.BreakListenerLow;
+import me.clip.ezblocks.listeners.BreakListenerLowest;
+import me.clip.ezblocks.listeners.BreakListenerMonitor;
+import me.clip.ezblocks.listeners.BreakListenerNormal;
+import me.clip.ezblocks.listeners.TEListener;
 import me.clip.ezblocks.tasks.IntervalSaveTask;
 
 import org.bukkit.Bukkit;
@@ -16,7 +24,7 @@ public class EZBlocks extends JavaPlugin {
 
 	public PlayerConfig playerconfig = new PlayerConfig(this);
 	protected EZBlocksConfig config = new EZBlocksConfig(this);
-	protected BreakHandler breakhandler = new BreakHandler(this);
+	protected BreakHandler breakHandler = new BreakHandler(this);
 	protected RewardHandler rewards = new RewardHandler(this);
 	protected EZBlocksCommands commands = new EZBlocksCommands(this);
 
@@ -29,9 +37,6 @@ public class EZBlocks extends JavaPlugin {
 	private static EZBlocks ezblocks;
 
 	public static Database database = null;
-	
-	
-	
 
 	@Override
 	public void onEnable() {
@@ -43,8 +48,12 @@ public class EZBlocks extends JavaPlugin {
 		loadOptions();
 
 		initDb();
+		
+		breakHandler = new BreakHandler(this);
 
-		registerListeners();
+		Bukkit.getServer().getPluginManager().registerEvents(breakHandler, this);
+		
+		registerBlockBreakListener();
 		
 		startSaveTask();
 		
@@ -57,7 +66,11 @@ public class EZBlocks extends JavaPlugin {
 		getLogger().info(config.loadPickaxeGlobalRewards() + " global pickaxe rewards loaded!");
 		
 		getLogger().info(config.loadPickaxeIntervalRewards() + " interval pickaxe rewards loaded!");
-
+		
+		if (Bukkit.getPluginManager().isPluginEnabled("TokenEnchant") && config.hookTokenEnchant()) {
+			new TEListener(this);
+			getLogger().info("Hooked into TokenEnchant for TEBlockExplodeEvent listener");
+		}
 	}
 	
 	private void initDb() {
@@ -82,9 +95,9 @@ public class EZBlocks extends JavaPlugin {
 					getLogger().info("Creating MySQL table ...");
 					
 					database.createTable("CREATE TABLE IF NOT EXISTS `"
-							+ database.getTablePrefix() + "playerblocks` ("
+							+ database.getTablePrefix() + "data` ("
 							+ "  `uuid` varchar(50) NOT NULL,"
-							+ "  `blocksmined` integer NOT NULL,"
+							+ "  `blocks` integer NOT NULL,"
 							+ "  PRIMARY KEY (`uuid`)"
 							+ ") ENGINE=InnoDB DEFAULT CHARSET=latin1;");
 				}
@@ -112,6 +125,9 @@ public class EZBlocks extends JavaPlugin {
 		options.setBelowYCoord(getConfig().getInt("only_track_below_y.coord"));
 		options.setSurvivalOnly(getConfig().getBoolean("survival_mode_only"));
 		options.setBlacklistedBlocks(getConfig().getStringList("material_blacklist"));
+		options.setTrackedTools(config.trackedTools());
+		options.setBlacklistIsWhitelist(config.blacklistIsWhitelist());
+		options.setGiveRewardsOnAddCommand(config.giveRewardsOnAddCommand());
 	}
 
 	protected void reload() {
@@ -153,8 +169,40 @@ public class EZBlocks extends JavaPlugin {
 		ezblocks = null;
 	}
 
-	protected void registerListeners() {
-		Bukkit.getServer().getPluginManager().registerEvents(breakhandler, this);
+	protected void registerBlockBreakListener() {
+		
+		if (config.useAutoSellEvents() && Bukkit.getPluginManager().getPlugin("AutoSell") != null) {
+			getLogger().info("Using AutoSell events for block break and sell detection...");
+			new AutoSellListener(this);
+			return;
+		} else {
+			getLogger().info("Failed to detect AutoSell. Defaulting to bukkit event listeners...");
+		}
+		//register break listener
+		String priority = config.getListenerPriority();
+		
+		if (priority.equalsIgnoreCase("lowest")) {
+			getLogger().info("BlockBreakEvent listener registered on LOWEST");
+			new BreakListenerLowest(this); 
+		} else if (priority.equalsIgnoreCase("low")) {
+			getLogger().info("BlockBreakEvent listener registered on LOW");
+			new BreakListenerLow(this);
+		} else if (priority.equalsIgnoreCase("normal")) {
+			getLogger().info("BlockBreakEvent listener registered on NORMAL");
+			new BreakListenerNormal(this);
+		} else if (priority.equalsIgnoreCase("high")) {
+			getLogger().info("BlockBreakEvent listener registered on HIGH");
+			new BreakListenerHigh(this);
+		} else if (priority.equalsIgnoreCase("highest")) {
+			getLogger().info("BlockBreakEvent listener registered on HIGHEST");
+			new BreakListenerHighest(this);
+		} else if (priority.equalsIgnoreCase("monitor")) {
+			getLogger().info("BlockBreakEvent listener registered on MONITOR");
+			new BreakListenerMonitor(this);
+		} else {
+			getLogger().info("BlockBreakEvent listener registered on HIGHEST");
+			new BreakListenerHighest(this);
+		}
 	}
 
 	private void startSaveTask() {
@@ -194,5 +242,9 @@ public class EZBlocks extends JavaPlugin {
 
 	public static EZBlocks getEZBlocks() {
 		return ezblocks;
+	}
+	
+	public BreakHandler getBreakHandler() {
+		return breakHandler;
 	}
 }
