@@ -10,11 +10,11 @@ import me.clip.ezblocks.tasks.PlayerSaveTask;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -56,86 +56,164 @@ public class BreakHandler implements Listener {
 			return true;
 		}
 		
-		if (EZBlocks.options.getBlacklistedBlocks().contains(m.toString())) {
+		if (EZBlocks.options.blacklistIsWhitelist()) {
+			if (!EZBlocks.options.getBlacklistedBlocks().contains(m.toString())) {
+				return false;
+			}
+		} else {
+			if (EZBlocks.options.getBlacklistedBlocks().contains(m.toString())) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean isTool(ItemStack i) {
+		
+		return EZBlocks.options.getTrackedTools() != null 
+				&& EZBlocks.options.getTrackedTools().contains(i.getType().name());
+	}
+	
+	private String getName(ItemStack i) {
+		String type = "";
+		switch (i.getType().name()) {
+		case "WOOD_PICKAXE":
+		case "WOODEN_PICKAXE":
+			type = "Wood Pickaxe";
+			break;
+		case "STONE_PICKAXE":
+			type = "Stone Pickaxe";
+			break;
+		case "IRON_PICKAXE":
+			type = "Iron Pickaxe";
+			break;
+		case "GOLD_PICKAXE":
+			type = "Golden Pickaxe";
+			break;
+		case "DIAMOND_PICKAXE":
+			type = "Diamond Pickaxe";
+			break;
+		case "WOOD_AXE":
+		case "WOODEN_AXE":
+			type = "Wood Axe";
+			break;
+		case "STONE_AXE":
+			type = "Stone Axe";
+			break;
+		case "IRON_AXE":
+			type = "Iron Axe";
+			break;
+		case "GOLD_AXE":
+			type = "Golden Axe";
+			break;
+		case "DIAMOND_AXE":
+			type = "Diamond Axe";
+			break;
+		case "WOOD_SPADE":
+		case "WOODEN_SHOVEL":
+			type = "Wood Spade";
+			break;
+		case "STONE_SPADE":
+		case "STONE_SHOVEL":
+			type = "Stone Spade";
+			break;
+		case "IRON_SPADE":
+		case "IRON_SHOVEL":
+			type = "Iron Spade";
+			break;
+		case "GOLD_SPADE":
+		case "GOLDEN_SHOVEL":
+			type = "Golden Spade";
+			break;
+		case "DIAMOND_SPADE":
+		case "DIAMOND_SHOVEL":
+			type = "Diamond Spade";
+			break;
+		}
+		
+		if (type.equals("")) {
+			return i.getType().name();
+		}
+		
+		return type;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public boolean check(Player p, Block b) {
+		if (!isAllowedBlock(b.getType())) {
 			return false;
 		}
-	
+		
+		ItemStack i = p.getItemInHand();
+		
+		if (i == null) {
+			return false;
+		}
+		
+		if (!isTool(i)) {
+			return false;
+		}
+		
+		if (EZBlocks.options.survivalOnly() && !p.getGameMode().equals(GameMode.SURVIVAL)) {
+			return false;
+		}
+		
+		if (!EZBlocks.options.getEnabledWorlds().contains(p.getWorld().getName())
+				&& !EZBlocks.options.getEnabledWorlds().contains("all")) {
+			return false;
+		}
+			
+		if (EZBlocks.options.onlyBelowY()
+				&& b.getLocation().getBlockY() > EZBlocks.options.getBelowYCoord()) {
+			return false;
+		}
+		
 		return true;
 	}
 
-	
-	@EventHandler(priority = EventPriority.HIGH)
-	public void onBreak(BlockBreakEvent e) {
+	@SuppressWarnings("deprecation")
+	public void handleBlockBreakEvent(final Player p, final Block block) {
 
-		if (e.isCancelled()) {
-			return;
-		}
-		
-		if (!isAllowedBlock(e.getBlock().getType())) {
-			return;
-		}
-		
-		Player p = e.getPlayer();
-		
-		if (EZBlocks.options.survivalOnly() && !p.getGameMode().equals(GameMode.SURVIVAL)) {
-			return;
-		}
-		
-		if (EZBlocks.options.getEnabledWorlds().contains(p.getWorld().getName())
-				|| EZBlocks.options.getEnabledWorlds().contains("all")) {
-			
-			if (EZBlocks.options.onlyBelowY()
-					&& e.getBlock().getLocation().getBlockY() > EZBlocks.options.getBelowYCoord()) {
-				return;
+		ItemStack i = p.getItemInHand();
+
+		String uuid = p.getUniqueId().toString();
+
+		int b;
+
+		if (!breaks.containsKey(uuid)) {
+
+			if (plugin.playerconfig.hasData(uuid)) {
+
+				b = plugin.playerconfig.getBlocksBroken(uuid) + 1;
+
+			} else {
+
+				b = 1;
 			}
 
-			ItemStack i = e.getPlayer().getItemInHand();
+		} else {
 
-			if (i.getType().equals(Material.DIAMOND_PICKAXE)
-					|| i.getType().equals(Material.GOLD_PICKAXE)
-					|| i.getType().equals(Material.IRON_PICKAXE)
-					|| i.getType().equals(Material.STONE_PICKAXE)
-					|| i.getType().equals(Material.WOOD_PICKAXE)) {
-
-				
-				String uuid = p.getUniqueId().toString();
-
-				int b;
-
-				if (!breaks.containsKey(uuid)) {
-
-					if (plugin.playerconfig.hasData(uuid)) {
-						
-						b = plugin.playerconfig.getBlocksBroken(uuid)+1;
-				
-					} else {
-						
-						b = 1;
-					}
-
-				} else {
-
-					b = breaks.get(uuid)+1;
-				}
-
-				breaks.put(uuid, b);
-
-				plugin.rewards.giveReward(p, b);
-				
-				plugin.rewards.giveIntervalReward(p, b);
-
-				if (EZBlocks.options.pickaxeNeverBreaks()) {
-
-					i.setDurability((short) 0);
-				}
-				
-				if (EZBlocks.options.usePickCounter() && p.hasPermission("ezblocks.pickaxecounter")) {
-					
-					handlePickCounter(p, i);
-				}
-			
-			}
+			b = breaks.get(uuid) + 1;
 		}
+
+		breaks.put(uuid, b);
+
+		plugin.rewards.giveReward(p, b);
+
+		plugin.rewards.giveIntervalReward(p, b);
+
+		if (EZBlocks.options.pickaxeNeverBreaks()) {
+
+			i.setDurability((short) 0);
+		}
+
+		if (EZBlocks.options.usePickCounter()
+				&& p.hasPermission("ezblocks.pickaxecounter")) {
+
+			handlePickCounter(p, i);
+		}
+
 	}
 	
 	private void handlePickCounter(Player p, ItemStack i) {
@@ -192,26 +270,7 @@ public class BreakHandler implements Listener {
 				
 			} else {
 				
-				String type = "";
-				
-				switch (i.getType().name()) {
-				
-				case "WOOD_PICKAXE":
-					type = "Wooden Pickaxe";
-					break;
-				case "STONE_PICKAXE":
-					type = "Stone Pickaxe";
-					break;
-				case "IRON_PICKAXE":
-					type = "Iron Pickaxe";
-					break;
-				case "GOLD_PICKAXE":
-					type = "Golden Pickaxe";
-					break;
-				case "DIAMOND_PICKAXE":
-					type = "Diamond Pickaxe";
-					break;
-				}
+				String type = getName(i);
 				
 				meta.setDisplayName(type+" "+format.replace("%blocks%", "1"));
 				i.setItemMeta(meta);

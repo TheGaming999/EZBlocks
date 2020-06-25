@@ -39,6 +39,8 @@ public class EZBlocksCommands implements CommandExecutor {
 					sms(s, "&c&lEZ&f&lB&flocks &7Help");
 					sms(s, "&f/blocks check <player> &7- &cView others blocks broken");
 					sms(s, "&f/blocks set <player> <blocks>&7- &cSet a players blocks broken");
+					sms(s, "&f/blocks add <player> <blocks>&7- &cAdd to a players blocks broken");
+					sms(s, "&f/blocks remove <player> <blocks>&7- &cRemove from a players blocks broken");
 					sms(s, "&f/blocks version &7- &cView plugin version");
 					sms(s, "&f/blocks reload &7- &cReload the ezblocks config");
 					return true;
@@ -107,7 +109,7 @@ public class EZBlocksCommands implements CommandExecutor {
 						return true;
 					}
 					
-					if (!plugin.breakhandler.isInt(args[2])) {
+					if (!plugin.getBreakHandler().isInt(args[2])) {
 						sms(s, "&f"+args[2]+" &cis not a valid amount!");
 						return true;
 					}
@@ -121,8 +123,77 @@ public class EZBlocksCommands implements CommandExecutor {
 					sms(s, "&aBlocks broken set to &f"+b+" &afor &f"+target.getName());
 					
 					return true;
-				}
-				else {
+				} else if (args[0].equalsIgnoreCase("add")) {
+					
+					
+					if (args.length != 3) {
+						sms(s, "&cIncorrect usage! &7/blocks add <player> <amount>");
+						return true;
+					}
+						
+					Player target = Bukkit.getServer().getPlayer(args[1]);
+						
+					if (target == null) {
+						sms(s, "&f"+args[1]+" &cis not online!");
+						return true;
+					}
+					
+					if (!plugin.getBreakHandler().isInt(args[2])) {
+						sms(s, "&f"+args[2]+" &cis not a valid amount!");
+						return true;
+					}
+					
+					int b = Integer.parseInt(args[2]);
+						
+					String uid = target.getUniqueId().toString();
+					
+					int current = BreakHandler.breaks.containsKey(uid) ? BreakHandler.breaks.get(uid) : 0;
+						
+					for (int i = current+1 ; i < current+b ; i++) {
+						plugin.rewards.giveReward(target, i);
+					}
+					
+					BreakHandler.breaks.put(uid, current+b);
+					
+					sms(s, "&aAdded &f" + b + " &ablocks broken to &f" + target.getName() + "&a. New total: &f"+BreakHandler.breaks.get(uid));
+					
+					return true;
+				} else if (args[0].equalsIgnoreCase("remove")) {
+					
+					
+					if (args.length != 3) {
+						sms(s, "&cIncorrect usage! &7/blocks remove <player> <amount>");
+						return true;
+					}
+						
+					Player target = Bukkit.getServer().getPlayer(args[1]);
+						
+					if (target == null) {
+						sms(s, "&f"+args[1]+" &cis not online!");
+						return true;
+					}
+					
+					if (!plugin.getBreakHandler().isInt(args[2])) {
+						sms(s, "&f"+args[2]+" &cis not a valid amount!");
+						return true;
+					}
+					
+					int b = Integer.parseInt(args[2]);
+						
+					String uid = target.getUniqueId().toString();
+					
+					int current = BreakHandler.breaks.containsKey(uid) ? BreakHandler.breaks.get(uid) : 0;
+						
+					if (b <= current) { 
+						BreakHandler.breaks.put(uid, current-b);
+					} else {
+						BreakHandler.breaks.put(uid, 0);
+					}
+					
+					sms(s, "&aRemoved &f" + b + " &ablocks broken from &f" + target.getName() + "&a. New total: &f"+BreakHandler.breaks.get(uid));
+					
+					return true;
+				} else {
 					sms(s, "&cIncorrect usage! &7/blocks help");
 				}
 				
@@ -174,7 +245,9 @@ public class EZBlocksCommands implements CommandExecutor {
 					sms(s, "&f/blocks &7- &cView your blocks broken");
 				}
 				sms(s, "&f/blocks check <player> &7- &cView others blocks broken");
-				sms(s, "&f/blocks set <player> <blocks>&7- &cSet a players blocks broken");
+				sms(s, "&f/blocks set <player> <blocks> &7- &cSet a players blocks");
+				sms(s, "&f/blocks add <player> <blocks> &7- &cAdd to a players blocks");
+				sms(s, "&f/blocks remove <player> <blocks> &7- &cRemove from a players blocks");
 				sms(s, "&f/blocks version &7- &cView plugin version");
 				sms(s, "&f/blocks reload &7- &cReload the ezblocks config");
 				return true;
@@ -189,10 +262,6 @@ public class EZBlocksCommands implements CommandExecutor {
 				return true;
 			}
 			else if (args[0].equalsIgnoreCase("version")) {
-				if (!p.hasPermission("ezblocks.admin")) {
-					sms(s, "&cYou don't have permission to do that!");
-					return true;
-				}
 				sms(s, "&c&lEZ&f&lB&flocks &7version &f" + plugin.getDescription().getVersion());
 				sms(s, "&7Created by: &cextended_clip");
 				return true;
@@ -241,7 +310,7 @@ public class EZBlocksCommands implements CommandExecutor {
 			}
 			else if (args[0].equalsIgnoreCase("set")) {
 				
-				if (!p.hasPermission("ezblocks.set")) {
+				if (!p.hasPermission("ezblocks.admin")) {
 					sms(s, "&cYou don't have permission to do that!");
 					return true;
 				}
@@ -258,7 +327,7 @@ public class EZBlocksCommands implements CommandExecutor {
 					return true;
 				}
 				
-				if (!plugin.breakhandler.isInt(args[2])) {
+				if (!plugin.getBreakHandler().isInt(args[2])) {
 					sms(s, "&f"+args[2]+" &cis not a valid amount!");
 					return true;
 				}
@@ -277,8 +346,87 @@ public class EZBlocksCommands implements CommandExecutor {
 				sms(s, "&aBlocks broken set to &f"+b+" &afor &f"+target.getName());
 				
 				return true;
-			}
-			else {
+			}  else if (args[0].equalsIgnoreCase("add")) {
+				
+				if (!p.hasPermission("ezblocks.admin")) {
+					sms(s, "&cYou don't have permission to do that!");
+					return true;
+				}
+				
+				if (args.length != 3) {
+					sms(s, "&cIncorrect usage! &7/blocks add <player> <amount>");
+					return true;
+				}
+					
+				Player target = Bukkit.getServer().getPlayer(args[1]);
+					
+				if (target == null) {
+					sms(s, "&f"+args[1]+" &cis not online!");
+					return true;
+				}
+				
+				if (!plugin.getBreakHandler().isInt(args[2])) {
+					sms(s, "&f"+args[2]+" &cis not a valid amount!");
+					return true;
+				}
+				
+				int b = Integer.parseInt(args[2]);
+					
+				String uid = target.getUniqueId().toString();
+				
+				int current = BreakHandler.breaks.containsKey(uid) ? BreakHandler.breaks.get(uid) : 0;
+					
+				if (EZBlocks.options.giveRewardsOnAddCommand()) {
+					for (int i = current+1 ; i <= current+b ; i++) {
+						plugin.rewards.giveReward(target, i);
+					}
+				}
+				
+				BreakHandler.breaks.put(uid, current+b);
+				
+				sms(s, "&aAdded &f" + b + " &ablocks broken to &f" + target.getName() + "&a. New total: &f"+BreakHandler.breaks.get(uid));
+				
+				return true;
+			} else if (args[0].equalsIgnoreCase("remove")) {
+				
+				if (!p.hasPermission("ezblocks.admin")) {
+					sms(s, "&cYou don't have permission to do that!");
+					return true;
+				}
+				
+				if (args.length != 3) {
+					sms(s, "&cIncorrect usage! &7/blocks remove <player> <amount>");
+					return true;
+				}
+					
+				Player target = Bukkit.getServer().getPlayer(args[1]);
+					
+				if (target == null) {
+					sms(s, "&f"+args[1]+" &cis not online!");
+					return true;
+				}
+				
+				if (!plugin.getBreakHandler().isInt(args[2])) {
+					sms(s, "&f"+args[2]+" &cis not a valid amount!");
+					return true;
+				}
+				
+				int b = Integer.parseInt(args[2]);
+					
+				String uid = target.getUniqueId().toString();
+				
+				int current = BreakHandler.breaks.containsKey(uid) ? BreakHandler.breaks.get(uid) : 0;
+					
+				if (b <= current) { 
+					BreakHandler.breaks.put(uid, current-b);
+				} else {
+					BreakHandler.breaks.put(uid, 0);
+				}
+				
+				sms(s, "&aRemoved &f" + b + " &ablocks broken from &f" + target.getName() + "&a. New total: &f"+BreakHandler.breaks.get(uid));
+				
+				return true;
+			} else {
 				sms(s, "&cIncorrect usage! &7/blocks help");
 			}
 			

@@ -2,6 +2,7 @@ package me.clip.ezblocks;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -48,8 +49,14 @@ public class EZBlocksConfig {
 		c.addDefault("database.username", "root");
 		c.addDefault("database.password", "");
 		/** End of database config */
-		c.addDefault("save_interval", 5);
+		if (c.contains("integration")) {
+			c.set("integration", null);
+		}
+		c.addDefault("hooks.autosell.use_autosell_events", true);
+		c.addDefault("hooks.tokenenchant.count_exploded_blocks", true);
 		
+		c.addDefault("save_interval", 5);
+		c.addDefault("blockbreakevent_priority", "HIGHEST");
 		c.addDefault("enabled_worlds", Arrays.asList(new String[] { "world", "world_nether", "all" }));
 		c.addDefault("survival_mode_only", true);
 		c.addDefault("pickaxe_never_breaks", true);
@@ -58,6 +65,7 @@ public class EZBlocksConfig {
 		c.addDefault("pickaxe_counter.enabled", false);
 		c.addDefault("pickaxe_counter.useDisplayName", true);
 		c.addDefault("pickaxe_counter.format", "&8[&c%blocks%&8]");	
+		c.addDefault("command_options.add.give_rewards_on_add", true);	
 		c.addDefault("global_rewards.default.blocks_needed", 100);
 		c.addDefault("global_rewards.default.reward_commands",
 				Arrays.asList(new String[] { "eco give %player% 100",
@@ -79,9 +87,37 @@ public class EZBlocksConfig {
 		c.addDefault("material_blacklist",
 				Arrays.asList(new String[] { "DIRT",
 						"GRASS" }));
+		c.addDefault("blacklist_is_whitelist", false);
+		c.addDefault("tracked_tools",
+				Arrays.asList(new String[] { "WOOD_PICKAXE", "STONE_PICKAXE", "IRON_PICKAXE", "GOLD_PICKAXE",
+						"DIAMOND_PICKAXE" }));
 		c.options().copyDefaults(true);
 		plugin.saveConfig();
 		plugin.reloadConfig();
+	}
+	
+	public boolean giveRewardsOnAddCommand() {
+		return plugin.getConfig().getBoolean("command_options.add.give_rewards_on_add", true);	
+	}
+	
+	public boolean blacklistIsWhitelist() {
+		return plugin.getConfig().getBoolean("blacklist_is_whitelist");
+	}
+	
+	public boolean hookTokenEnchant() {
+		return plugin.getConfig().getBoolean("hooks.tokenenchant.count_exploded_blocks");
+	}
+	
+	public boolean useAutoSellEvents() {
+		return plugin.getConfig().getBoolean("hooks.autosell.use_autosell_events");
+	}
+	
+	public String getListenerPriority() {
+		return plugin.getConfig().getString("blockbreakevent_priority");
+	}
+	
+	public List<String> trackedTools() {
+		return plugin.getConfig().getStringList("tracked_tools");
 	}
 	
 	public boolean pickCounterEnabled() {

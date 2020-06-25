@@ -58,8 +58,9 @@ public class PlayerConfig {
 		if (plugin.getConfig().getBoolean("database.enabled")
 				&& EZBlocks.database != null) {
 			
-			if (!EZBlocks.database.checkConnection()) {
-				EZBlocks.database.open();
+			if (EZBlocks.database.getConnection() == null) {
+				plugin.getLogger().warning("Could not connect to database! Failed to save data for uuid: " + uuid + "!");
+				return;
 			}
 
 			try {
@@ -109,8 +110,9 @@ public class PlayerConfig {
 		if (plugin.getConfig().getBoolean("database.enabled")
 				&& EZBlocks.database != null) {
 			
-			if (!EZBlocks.database.checkConnection()) {
-				EZBlocks.database.open();
+			if (EZBlocks.database.getConnection() == null) {
+				plugin.getLogger().warning("Could not connect to database! Failed to load data for uuid: " + uuid + "!");
+				return 0;
 			}
 			// Get data from mysql
 			try {

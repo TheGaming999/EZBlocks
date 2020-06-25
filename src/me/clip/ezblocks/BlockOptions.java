@@ -20,6 +20,12 @@ public class BlockOptions {
 	
 	private List<String> blacklistedBlocks;
 	
+	private List<String> trackedTools;
+	
+	private boolean blacklistIsWhitelist;
+	
+	private boolean giveRewardsOnAddCommand;
+	
 	public BlockOptions(){
 		useBlocksCommand = true;
 	}
@@ -132,6 +138,36 @@ public class BlockOptions {
 
 	public void setBlacklistedBlocks(List<String> blacklistedBlocks) {
 		this.blacklistedBlocks = blacklistedBlocks;
+	}
+
+
+	public List<String> getTrackedTools() {
+		return trackedTools;
+	}
+
+
+	public void setTrackedTools(List<String> trackedTools) {
+		this.trackedTools = trackedTools;
+	}
+
+
+	public boolean blacklistIsWhitelist() {
+		return blacklistIsWhitelist;
+	}
+
+
+	public void setBlacklistIsWhitelist(boolean blacklistIsWhitelist) {
+		this.blacklistIsWhitelist = blacklistIsWhitelist;
+	}
+
+
+	public boolean giveRewardsOnAddCommand() {
+		return giveRewardsOnAddCommand;
+	}
+
+
+	public void setGiveRewardsOnAddCommand(boolean giveRewardsOnAddCommand) {
+		this.giveRewardsOnAddCommand = giveRewardsOnAddCommand;
 	}
 	
 }

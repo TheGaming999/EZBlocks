@@ -92,6 +92,14 @@ public class MySQL extends Database {
 		// Create connection if closed or null
 		if (this.connection == null)
 			return open();
+		try {
+			if (this.connection.isClosed()) {
+				return open();
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return this.connection;
 	}
 
