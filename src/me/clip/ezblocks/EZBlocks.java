@@ -1,24 +1,22 @@
 package me.clip.ezblocks;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import me.clip.ezblocks.database.Database;
 import me.clip.ezblocks.database.MySQL;
 import me.clip.ezblocks.listeners.AutoSellListener;
-import me.clip.ezblocks.listeners.BreakListenerHigh;
-import me.clip.ezblocks.listeners.BreakListenerHighest;
-import me.clip.ezblocks.listeners.BreakListenerLow;
-import me.clip.ezblocks.listeners.BreakListenerLowest;
-import me.clip.ezblocks.listeners.BreakListenerMonitor;
-import me.clip.ezblocks.listeners.BreakListenerNormal;
+import me.clip.ezblocks.listeners.BreakListener;
 import me.clip.ezblocks.listeners.TEListener;
 import me.clip.ezblocks.tasks.IntervalSaveTask;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+
 
 public class EZBlocks extends JavaPlugin {
 
@@ -71,6 +69,7 @@ public class EZBlocks extends JavaPlugin {
 			new TEListener(this);
 			getLogger().info("Hooked into TokenEnchant for TEBlockExplodeEvent listener");
 		}
+		
 	}
 	
 	private void initDb() {
@@ -116,7 +115,7 @@ public class EZBlocks extends JavaPlugin {
 		options = new BlockOptions();
 		options.setUseBlocksCommand(getConfig().getBoolean("blocks_broken_command_enabled"));
 		options.setBrokenMsg(getConfig().getString("blocks_broken_message"));
-		options.setEnabledWorlds(getConfig().getStringList("enabled_worlds"));
+		options.setEnabledWorlds(new HashSet<>(getConfig().getStringList("enabled_worlds")));
 		options.setUsePickCounter(config.pickCounterEnabled());
 		options.setUsePickCounterDisplayName(config.pickCounterInDisplay());
 		options.setPickCounterFormat(config.pickCounterFormat());
@@ -124,8 +123,8 @@ public class EZBlocks extends JavaPlugin {
 		options.setOnlyBelowY(getConfig().getBoolean("only_track_below_y.enabled"));
 		options.setBelowYCoord(getConfig().getInt("only_track_below_y.coord"));
 		options.setSurvivalOnly(getConfig().getBoolean("survival_mode_only"));
-		options.setBlacklistedBlocks(getConfig().getStringList("material_blacklist"));
-		options.setTrackedTools(config.trackedTools());
+		options.setBlacklistedBlocks(new HashSet<>(getConfig().getStringList("material_blacklist")));
+		options.setTrackedTools(new HashSet<>(config.trackedTools()));
 		options.setBlacklistIsWhitelist(config.blacklistIsWhitelist());
 		options.setGiveRewardsOnAddCommand(config.giveRewardsOnAddCommand());
 	}
@@ -170,7 +169,6 @@ public class EZBlocks extends JavaPlugin {
 	}
 
 	protected void registerBlockBreakListener() {
-		
 		if (config.useAutoSellEvents() && Bukkit.getPluginManager().getPlugin("AutoSell") != null) {
 			getLogger().info("Using AutoSell events for block break and sell detection...");
 			new AutoSellListener(this);
@@ -178,31 +176,13 @@ public class EZBlocks extends JavaPlugin {
 		} else {
 			getLogger().info("Failed to detect AutoSell. Defaulting to bukkit event listeners...");
 		}
-		//register break listener
-		String priority = config.getListenerPriority();
 		
-		if (priority.equalsIgnoreCase("lowest")) {
-			getLogger().info("BlockBreakEvent listener registered on LOWEST");
-			new BreakListenerLowest(this); 
-		} else if (priority.equalsIgnoreCase("low")) {
-			getLogger().info("BlockBreakEvent listener registered on LOW");
-			new BreakListenerLow(this);
-		} else if (priority.equalsIgnoreCase("normal")) {
-			getLogger().info("BlockBreakEvent listener registered on NORMAL");
-			new BreakListenerNormal(this);
-		} else if (priority.equalsIgnoreCase("high")) {
-			getLogger().info("BlockBreakEvent listener registered on HIGH");
-			new BreakListenerHigh(this);
-		} else if (priority.equalsIgnoreCase("highest")) {
-			getLogger().info("BlockBreakEvent listener registered on HIGHEST");
-			new BreakListenerHighest(this);
-		} else if (priority.equalsIgnoreCase("monitor")) {
-			getLogger().info("BlockBreakEvent listener registered on MONITOR");
-			new BreakListenerMonitor(this);
-		} else {
-			getLogger().info("BlockBreakEvent listener registered on HIGHEST");
-			new BreakListenerHighest(this);
-		}
+		//register break listener
+		String priority = config.getListenerPriority().toUpperCase();
+		
+		new BreakListener(this, EventPriority.valueOf(priority));
+
+		getLogger().info("BlockBreakEvent listener registered on " + priority);
 	}
 
 	private void startSaveTask() {
@@ -220,7 +200,6 @@ public class EZBlocks extends JavaPlugin {
 					this, new IntervalSaveTask(this), 1L,
 					((20L * 60L) * saveInterval));
 		}
-
 	}
 
 	private void stopSaveTask() {
@@ -237,7 +216,6 @@ public class EZBlocks extends JavaPlugin {
 		} else {
 			return 0;
 		}
-
 	}
 
 	public static EZBlocks getEZBlocks() {
