@@ -1,12 +1,11 @@
 package me.clip.ezblocks;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 public class BlockOptions {
 	
 	
-	private List<String> enabledWorlds = new ArrayList<String>();
+	private Set<String> enabledWorlds;
 	private boolean survivalOnly;
 	private boolean useBlocksCommand;
 	private String brokenMsg;
@@ -18,25 +17,25 @@ public class BlockOptions {
 	private boolean usePickCounterDisplayName;
 	private String pickCounterFormat;
 	
-	private List<String> blacklistedBlocks;
+	private Set<String> blacklistedBlocks;
 	
-	private List<String> trackedTools;
+	private Set<String> trackedTools;
 	
 	private boolean blacklistIsWhitelist;
 	
 	private boolean giveRewardsOnAddCommand;
 	
-	public BlockOptions(){
+	public BlockOptions() {
 		useBlocksCommand = true;
 	}
 
 
-	public List<String> getEnabledWorlds() {
+	public Set<String> getEnabledWorlds() {
 		return enabledWorlds;
 	}
 
 
-	public void setEnabledWorlds(List<String> enabledWorlds) {
+	public void setEnabledWorlds(Set<String> enabledWorlds) {
 		this.enabledWorlds = enabledWorlds;
 	}
 
@@ -131,22 +130,22 @@ public class BlockOptions {
 	}
 
 
-	public List<String> getBlacklistedBlocks() {
+	public Set<String> getBlacklistedBlocks() {
 		return blacklistedBlocks;
 	}
 
 
-	public void setBlacklistedBlocks(List<String> blacklistedBlocks) {
+	public void setBlacklistedBlocks(Set<String> blacklistedBlocks) {
 		this.blacklistedBlocks = blacklistedBlocks;
 	}
 
 
-	public List<String> getTrackedTools() {
+	public Set<String> getTrackedTools() {
 		return trackedTools;
 	}
 
 
-	public void setTrackedTools(List<String> trackedTools) {
+	public void setTrackedTools(Set<String> trackedTools) {
 		this.trackedTools = trackedTools;
 	}
 
